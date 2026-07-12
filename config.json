@@ -1,4 +1,11 @@
 {
   "password_hash": "d30252350fff2dcc5fd7f967be585085b09bd50b13f1de6ab1faa7578a58f58c",
-  "sites": []
+  "sites": [
+    {
+      "name": "Jayaclean Salespage",
+      "repo": "banktif/jayaclean-salespage",
+      "file": "index.html",
+      "branch": "master"
+    }
+  ]
 }
