@@ -1,0 +1,7 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Upload Test</title></head>
+<body style="background:#0d1f15;color:#f2faf4;font:16px sans-serif;padding:40px">
+<h1>File Upload Test</h1>
+<p id="msg">No file selected</p>
+<button onclick="document.getElementById('f').click()" style="padding:12px 20px;font-size:16px;background:#38b86a;border:0;border-radius:8px;color:#05200e;font-weight:700;cursor:pointer">Open HTML File</button>
+<input type="file" id="f" accept=".html,.htm" onchange="var fl=this.files[0];if(fl){document.getElementById('msg').textContent='File: '+fl.name+' ('+Math.round(fl.size/1024)+' KB)';var r=new FileReader();r.onload=function(){document.getElementById('msg').textContent+=' — Read OK, '+r.result.length+' chars'};r.readAsText(fl)}else{document.getElementById('msg').textContent='No file selected'}" style="position:absolute;opacity:0;width:1px;height:1px">
+</body></html>
