@@ -127,6 +127,8 @@
 
 <script>
 'use strict';
+console.log('[DBG] Main script START');
+try{_db('dbState','🔧 Script loaded')}catch(e){console.error(e)}
 var editor=null,dirty=false,previewMode=false,outlineMode=false;
 var currentEnvelope=null,currentFileName='';
 var G=window.JayaGrapesFull||{};
@@ -139,7 +141,7 @@ function initEditor(){
   if(!window.JayaGrapesFull||!window.JayaGrapesFull.grapesjs||window.JayaGrapesFull.version!=='0.23.2'){
     _initRetries++;
     if(_initRetries===1){_db('dbBundle','📦 Waiting (JGF='+(typeof window.JayaGrapesFull)+' gjs='+(window.JayaGrapesFull?typeof window.JayaGrapesFull.grapesjs:'N/A')+' ver='+(window.JayaGrapesFull?window.JayaGrapesFull.version:'N/A')+')')}
-    _db('dbBundle','📦 Loading... ('+_initRetries+'/'+_MAX_INIT_RETRIES+')');
+    else{_db('dbBundle','📦 Loading... ('+_initRetries+'/'+_MAX_INIT_RETRIES+')')}
     var ob=document.getElementById('openBtn');if(ob&&_initRetries===1){ob.style.pointerEvents='none';ob.style.opacity='0.5';var sp=ob.querySelector('span');if(sp)sp.textContent='Loading editor...'}
     if(_initRetries>=_MAX_INIT_RETRIES){
     if(_initRetries>=_MAX_INIT_RETRIES){
@@ -161,7 +163,8 @@ function initEditor(){
   if(window._pendingFile){_db('dbFile','📄 Pending file...');var pf=window._pendingFile;window._pendingFile=null;handleFileOpen(pf)}
 }
 
-if(sessionStorage.getItem('gjs_unlock')){initEditor()}
+console.log('[DBG] About to check sessionStorage for gjs_unlock');
+try{var isUnlocked=sessionStorage.getItem('gjs_unlock');console.log('[DBG] gjs_unlock=',isUnlocked);if(isUnlocked){console.log('[DBG] Calling initEditor');initEditor()}else{console.log('[DBG] Not unlocked')}}catch(e){console.error('[DBG] sessionStorage error:',e.message)}
 
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function toast(message,ok){var el=document.getElementById('toast');el.textContent=message;el.className='toast '+(ok?'ok':'error')+' show';clearTimeout(toast.timer);toast.timer=setTimeout(function(){el.className='toast'},ok?3500:8000)}
