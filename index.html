@@ -37,8 +37,8 @@
   <header class="top-main">
     <div class="brand"><span class="brand-mark">J</span><span class="brand-copy"><b>JAYABINA</b><small>Visual Editor · GrapesJS 0.23.2</small></span></div>
     <div class="file-drop-area">
-      <label for="fileInput" class="btn primary" style="cursor:pointer"><svg><use href="#i-upload"/></svg><span>Open HTML</span></label>
-      <input type="file" id="fileInput" accept=".html,.htm" onchange="try{if(this.files&&this.files[0]&&typeof handleFileOpen==='function')handleFileOpen(this.files[0])}catch(e){console.error(e)}this.value=''" hidden>
+      <label for="fileInput" id="openBtn" class="btn primary" style="cursor:pointer"><svg><use href="#i-upload"/></svg><span>Open HTML</span></label>
+      <input type="file" id="fileInput" accept=".html,.htm" onchange="(function(inp){try{if(inp.files&&inp.files[0]){if(typeof handleFileOpen==='function'){handleFileOpen(inp.files[0])}else{window._pendingFile=inp.files[0];var fi=document.getElementById('fileInfo');if(fi)fi.innerHTML='<b>Editor loading...</b><small>Your file will open once ready</small>'}}inp.value=''}catch(e){console.error(e);inp.value=''}})(this)" hidden>
     </div>
     <button class="btn primary" id="downloadBtn" onclick="handleDownload()" disabled><svg><use href="#i-download"/></svg><span>Download</span></button>
     <div class="file-info" id="fileInfo"><b>No file loaded</b><small>Open an HTML file to edit</small></div>
@@ -58,7 +58,7 @@
     <div class="canvas-wrap">
       <div id="gjs"></div>
       <div class="drag-overlay" id="dragOverlay"><span>Drop HTML file here</span></div>
-      <div class="empty" id="emptyState"><div class="empty-card"><div class="empty-icon">&#9670;</div><h1>Open an HTML file</h1><p>Upload a complete HTML file to edit it visually. Scripts and metadata are preserved.</p><div class="empty-actions"><button class="btn primary" onclick="document.getElementById('fileInput').click()"><svg><use href="#i-upload"/></svg> Open HTML file</button></div></div></div>
+      <div class="empty" id="emptyState"><div class="empty-card"><div class="empty-icon">&#9670;</div><h1>Open an HTML file</h1><p>Upload a complete HTML file to edit it visually. Scripts and metadata are preserved.</p><div class="empty-actions"><label for="fileInput" class="btn primary" style="cursor:pointer"><svg><use href="#i-upload"/></svg> Open HTML file</label></div></div></div>
       <div class="status-strip hidden" id="canvasStatus"><b id="canvasSite">No file</b> · <span id="canvasDevice">Desktop</span></div>
     </div>
     <aside class="sidebar right" id="rightSidebar"><div class="side-head"><b>Design inspector</b><button class="icon-btn side-close" onclick="closeSides()"><svg><use href="#i-close"/></svg></button></div><div class="right-tabs"><button class="active" onclick="showRightPane('styles',this)">Styles</button><button onclick="showRightPane('traits',this)">Settings</button><button onclick="showRightPane('layers',this)">Layers</button></div><div class="side-scroll"><div class="right-pane active" id="paneStyles"><div id="selectorsPanel"></div><div id="stylesPanel"></div></div><div class="right-pane" id="paneTraits"><div id="traitsPanel"></div></div><div class="right-pane" id="paneLayers"><div id="layersPanel"></div></div></div></aside>
@@ -104,12 +104,15 @@
   window._checkPassword = checkPassword;
 
   try {
-    if (sessionStorage.getItem('gjs_unlock')) {
+    var unlocked = sessionStorage.getItem('gjs_unlock');
+    if (unlocked) {
       document.getElementById('pwGate').style.display = 'none';
     } else {
       var pi = document.getElementById('pwInput'); if(pi) pi.focus();
     }
-  } catch(e) {}
+  } catch(e) {
+    document.getElementById('pwGate').style.display = 'none';
+  }
 })();
 </script>
 
@@ -127,6 +130,8 @@ var _bundleReady=false;
 function initEditor(){
   if(!window.JayaGrapesFull||!window.JayaGrapesFull.grapesjs||window.JayaGrapesFull.version!=='0.23.2'){
     _initRetries++;
+    var ob=document.getElementById('openBtn');if(ob&&_initRetries===1){ob.style.pointerEvents='none';ob.style.opacity='0.5';var sp=ob.querySelector('span');if(sp)sp.textContent='Loading editor...'}
+    if(_initRetries>=_MAX_INIT_RETRIES){
     if(_initRetries>=_MAX_INIT_RETRIES){
       var es=document.getElementById('emptyState');
       if(es){
@@ -141,7 +146,9 @@ function initEditor(){
     document.getElementById('fileInfo').innerHTML='<b>Loading editor...</b><small>GrapesJS 0.23.2 ('+_initRetries+'/'+_MAX_INIT_RETRIES+')</small>';
     setTimeout(initEditor,600);return
   }
-  G=window.JayaGrapesFull;_bundleReady=true;setInfo();document.getElementById('canvasStatus').classList.add('hidden');setupDragDrop()
+  G=window.JayaGrapesFull;_bundleReady=true;setInfo();document.getElementById('canvasStatus').classList.add('hidden');setupDragDrop();
+  var ob=document.getElementById('openBtn');if(ob){ob.style.pointerEvents='';ob.style.opacity='';var sp=ob.querySelector('span');if(sp)sp.textContent='Open HTML'}
+  if(window._pendingFile){var pf=window._pendingFile;window._pendingFile=null;handleFileOpen(pf)}
 }
 
 if(sessionStorage.getItem('gjs_unlock')){initEditor()}
@@ -158,12 +165,13 @@ function splitDocument(html){
 function handleFileOpen(file){
   if(!file){return}
   if(!_bundleReady){toast('Editor is still loading. Please wait.',false);return}
+  if(file.size>5242880){toast('File too large. Maximum 5 MB.',false);setInfo();return}
   if(!confirmDiscard()){return}
   _fileSeq++;var mySeq=_fileSeq;
   currentFileName=file.name||'untitled.html';
   _log('File: '+esc(currentFileName)+' ('+Math.round(file.size/1024)+' KB)');
   var reader=new FileReader();
-  reader.onload=function(e){if(mySeq!==_fileSeq){return}_log('File read OK');try{currentEnvelope=splitDocument(e.target.result);if(mySeq!==_fileSeq)return;_log('HTML parsed: '+(currentEnvelope.bodyHtml||'').length+' chars body');_openWithRetry()}catch(err){_log('PARSE ERROR: '+err.message,true);toast('Failed to parse HTML: '+err.message,false);onEditorError('The file could not be parsed as valid HTML: '+err.message)}};
+  reader.onload=function(e){if(mySeq!==_fileSeq){return}_log('File read OK');try{currentEnvelope=splitDocument(e.target.result);if(mySeq!==_fileSeq)return;if(!currentEnvelope.bodyHtml||currentEnvelope.bodyHtml.trim().length===0){_log('Empty body',true);toast('This file appears to be empty or has no visible content.',false);setInfo();return}_log('HTML parsed: '+(currentEnvelope.bodyHtml||'').length+' chars body');_openWithRetry()}catch(err){_log('PARSE ERROR: '+err.message,true);toast('Failed to parse HTML: '+err.message,false);onEditorError('The file could not be parsed as valid HTML: '+err.message)}};
   reader.onerror=function(){if(mySeq!==_fileSeq)return;_log('READ ERROR');toast('Failed to read file',false);setInfo()};
   _log('Reading file...');
   reader.readAsText(file)
