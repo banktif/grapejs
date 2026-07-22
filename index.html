@@ -99,7 +99,7 @@
     if(!inp){return}
     if (inp.value === 'jaya2026') {
       document.getElementById('pwGate').style.display = 'none';
-      sessionStorage.setItem('gjs_unlock', '1');
+      window.__unlocked = true;
       if (typeof initEditor === 'function') initEditor();
       else document.getElementById('fileInfo').innerHTML = '<b>Loading editor...</b><small>Waiting for bundle</small>';
     } else {
@@ -109,17 +109,8 @@
     }
   }
   window._checkPassword = checkPassword;
-
-  try {
-    var unlocked = sessionStorage.getItem('gjs_unlock');
-    if (unlocked) {
-      document.getElementById('pwGate').style.display = 'none';
-    } else {
-      var pi = document.getElementById('pwInput'); if(pi) pi.focus();
-    }
-  } catch(e) {
-    document.getElementById('pwGate').style.display = 'none';
-  }
+  if (window.__unlocked) { document.getElementById('pwGate').style.display = 'none'; }
+  else { var pi = document.getElementById('pwInput'); if(pi) pi.focus(); }
 })();
 </script>
 
@@ -163,8 +154,7 @@ function initEditor(){
   if(window._pendingFile){_db('dbFile','📄 Pending file...');var pf=window._pendingFile;window._pendingFile=null;handleFileOpen(pf)}
 }
 
-console.log('[DBG] About to check sessionStorage for gjs_unlock');
-try{var isUnlocked=sessionStorage.getItem('gjs_unlock');console.log('[DBG] gjs_unlock=',isUnlocked);if(isUnlocked){console.log('[DBG] Calling initEditor');initEditor()}else{console.log('[DBG] Not unlocked')}}catch(e){console.error('[DBG] sessionStorage error:',e.message)}
+console.log('[DBG] Main script loaded');initEditor();
 
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function toast(message,ok){var el=document.getElementById('toast');el.textContent=message;el.className='toast '+(ok?'ok':'error')+' show';clearTimeout(toast.timer);toast.timer=setTimeout(function(){el.className='toast'},ok?3500:8000)}
