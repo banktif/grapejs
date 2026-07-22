@@ -138,6 +138,8 @@ function _db(k,v){var el=document.getElementById(k);if(el)el.textContent=v;conso
 function initEditor(){
   if(!window.JayaGrapesFull||!window.JayaGrapesFull.grapesjs||window.JayaGrapesFull.version!=='0.23.2'){
     _initRetries++;
+    if(_initRetries===1){_db('dbBundle','📦 Waiting (JGF='+(typeof window.JayaGrapesFull)+' gjs='+(window.JayaGrapesFull?typeof window.JayaGrapesFull.grapesjs:'N/A')+' ver='+(window.JayaGrapesFull?window.JayaGrapesFull.version:'N/A')+')')}
+    _db('dbBundle','📦 Loading... ('+_initRetries+'/'+_MAX_INIT_RETRIES+')');
     var ob=document.getElementById('openBtn');if(ob&&_initRetries===1){ob.style.pointerEvents='none';ob.style.opacity='0.5';var sp=ob.querySelector('span');if(sp)sp.textContent='Loading editor...'}
     if(_initRetries>=_MAX_INIT_RETRIES){
     if(_initRetries>=_MAX_INIT_RETRIES){
